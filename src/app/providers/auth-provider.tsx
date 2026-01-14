@@ -1,18 +1,22 @@
 "use client";
 
 import { SessionProvider, useSession } from "next-auth/react";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const PUBLIC_ROUTES = ["/login", "/signup"];
+const PUBLIC_LOGIN_PREFIXES = ["/admin/login", "/mod/login"];
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const { status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
 
-  // Allow public routes
-  if (PUBLIC_ROUTES.includes(pathname)) {
+  const isPublicRoute =
+    PUBLIC_ROUTES.includes(pathname) ||
+    PUBLIC_LOGIN_PREFIXES.some((route) => pathname === route);
+
+  if (isPublicRoute) {
     return <>{children}</>;
   }
 

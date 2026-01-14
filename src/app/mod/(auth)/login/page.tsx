@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const res = await signIn("credentials", {
+    const res = await signIn("mod-credentials", {
       email,
       password,
       redirect: false,
@@ -40,7 +40,7 @@ export default function LoginPage() {
         className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 shadow-2xl"
       >
         <h1 className="mb-6 text-center text-2xl font-semibold text-white">
-          Welcome Back
+          Welcome Back Mod
         </h1>
 
         {error && (
@@ -76,7 +76,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-xl bg-linear-to-r from-indigo-500 to-purple-600 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
@@ -89,6 +89,9 @@ export default function LoginPage() {
           >
             Sign up
           </span>
+          </p>
+        <p className="mt-4 text-center text-sm text-red-400">
+          Restricted Section!
         </p>
       </form>
     </div>
