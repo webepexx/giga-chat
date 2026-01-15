@@ -9,7 +9,7 @@ const PUBLIC_LOGIN_PREFIXES = ["/admin/login", "/mod/login"];
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
-  const pathname = usePathname();
+  const pathname = usePathname() || '/';
   const router = useRouter();
 
   const isPublicRoute =
@@ -36,7 +36,7 @@ function AuthGuard({ children }: { children: ReactNode }) {
 
       // Mod logic: Can ONLY access /mod/...
       else if (role === "MOD" && !pathname.startsWith("/mod")) {
-        router.replace("/mod/dashboard");
+        router.replace("/mod/chat");
       }
 
       // User logic: Cannot access /admin or /mod

@@ -14,14 +14,77 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String?
-  email     String   @unique
-  password  String
-  lastLogin DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String    @id @default(uuid())
+  name            String?
+  email           String    @unique
+  password        String
+  lastLogin       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Profile and Chat Info
+  username        String?   @unique
+  gender          String?
+  chatCount       Int       @default(0)
+  pfpUrl          String?
+  interests       String[]  // Array of strings for interests
+  
+  // Settings
+  genderMatch     String    @default("random")
+  
+  // Social & Safety
+  friends         Json?     // Stores array of {id, name, chat_id}
+  giftsSent       Int       @default(0)
+  reportCount     Int       @default(0)
+  
+  // Billing & Subscription
+  billingDate     DateTime?
+  planId          String?   // Foreign key
+  plan            Plan?     @relation(fields: [planId], references: [id])
 }
+
+
+
+model Plan {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  price           Float    // In Rupees (0, 99, 499)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Features
+  editName        Boolean  @default(false)
+  editPfp         Boolean  @default(false)
+  sendEmojis      Boolean  @default(false)
+  sendGifs        Boolean  @default(false)
+  sendVideos      Boolean  @default(false) // Premium feature
+  
+  // Matching & Logic
+  minMatchTime    Int      @default(60)    // Seconds (60-120 for Free, 0 for Premium)
+  selectGender    Boolean  @default(false)
+  chatTimer       Int      @default(30)    // In-chat countdown timer (30, 15, or 0 for none)
+  
+  // Limits
+  maxDailyChats   Int      @default(20)    // 20, 50, or 9999 for unlimited
+  maxFriendReq    Int      @default(0)     // 0, 15, or 50
+
+  users           User[]
+}
+
+/*
+USER Contenxt
+
+plan
+pfp_edit
+name_edit
+can_send_gifs
+can_send_images
+can_send_emojis
+chat_cooldown
+chats_left
+search_cooldown(min + random 2 to 20 sec)
+friend_request_send
+*/
 
 model Admin {
   id        String   @id @default(uuid())
@@ -43,3 +106,7 @@ model Mod {
   updatedAt DateTime @updatedAt
 }
 
+model Chat {
+  id String @id @default(uuid())
+  chats Json
+}
