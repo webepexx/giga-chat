@@ -7,7 +7,7 @@ import { useState } from "react";
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
 
     const res = await signIn("credentials", {
-      email,
+      phone,
       password,
       redirect: false,
     });
@@ -26,7 +26,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (res?.error) {
-      setError("Invalid email or password");
+      setError("Invalid phone number or password");
       return;
     }
 
@@ -49,18 +49,27 @@ export default function LoginPage() {
           </p>
         )}
 
+        {/* Phone */}
         <div className="mb-4">
-          <label className="mb-1 block text-sm text-gray-300">Email</label>
+          <label className="mb-1 block text-sm text-gray-300">
+            Phone Number
+          </label>
           <input
-            type="email"
+            type="tel"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            value={phone}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d*$/.test(value)) {
+                setPhone(value);
+              }
+            }}
+            placeholder="+91 000 000 000"
             className="w-full rounded-lg border border-white/10 bg-black/30 px-4 py-2 text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
 
+        {/* Password */}
         <div className="mb-6">
           <label className="mb-1 block text-sm text-gray-300">Password</label>
           <input

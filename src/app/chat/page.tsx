@@ -11,6 +11,7 @@ import { IconX } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { removeEmojis } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { RandomUserProfile } from "@/hooks/useModChatSocket";
 
 type Message = {
   id: number;
@@ -32,7 +33,8 @@ export default function UserChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [connected, setConnected] = useState(false);
-  const [partnerName, setPartnerName] = useState<string | null>(null);
+  // const [partnerName, setPartnerName] = useState<string | null>(null);
+  const [partnerProfile, setPartnerProfile] = useState<RandomUserProfile | null>(null);
 
   const [myroomId, setRoomId] = useState<string | null>(null);
   const roomIdRef = useRef<string | null>(null);
@@ -59,22 +61,30 @@ export default function UserChatPage() {
     socket.emit("user:identify", { username });
 
     socket.on("match:searching", (delay: number) => setSearchingText(`Searching...`));
-    socket.on("chat:connected", ({ roomId }) => {
+    socket.on("chat:connected", ({ roomId, userProfile }) => {
       setRoomId(roomId);
       roomIdRef.current = roomId
       setMessages([]);
       setConnected(true);
-      setPartnerName("Random MOD NAME");
+      // setPartnerName("Random MOD NAME");
       setSearchingText(null);
-      console.log("USER CONNECTED", roomId)
+      // console.log("USER CONNECTED", roomId)
+      decreaseChat();
     });
-    
+
+
+    socket.on("chat:user-profile", ({ roomId, userProfile }) => {
+      if (roomId !== roomIdRef.current) return;
+      setPartnerProfile(userProfile);
+    });
+
+
     socket.on("chat:message", (msg) => {
       // console.log("ROOM ID MISSING", msg, myroomId)
       if (msg.roomId !== roomIdRef.current || msg.sender == "user") {
-      // console.log("MESSAGE USER recieved",msg)
-      return
-    }
+        // console.log("MESSAGE USER recieved",msg)
+        return
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -92,11 +102,12 @@ export default function UserChatPage() {
     // socket.on("chat:ended", () => { setConnected(false); setPartnerName(null); });
     socket.on("chat:ended", () => {
       setConnected(false);
-      setPartnerName(null);
+      // setPartnerName(null);
+      setPartnerProfile(null);
       if (!userEnded) setChatStatus("partner_skipped")
       setRoomId(null);
     });
-    
+
     socket.on('no-mod-available', () => {
       notifications.show({
         title: 'No one is available',
@@ -119,17 +130,20 @@ export default function UserChatPage() {
 
   const handleInputChange = (value: string) => {
     let input = value
-    if(!state?.can_send_emojis){
+    if (!state?.can_send_emojis) {
       const filter = removeEmojis(input)
-      notifications.show({
-        title: 'Error',
-        message: 'Upgrade plan to send emojis',
-        icon: <IconX size={18} />,
-        color: 'red',
-      });
+
+      if (filter != input) {
+        notifications.show({
+          title: 'Emojis Not Allowed',
+          message: 'Upgrade plan to send emojis',
+          icon: <IconX size={18} />,
+          color: 'red',
+        });
+      }
       setInput(filter);
     }
-    else{
+    else {
       setInput(input);
     }
     if (!connected) return;
@@ -143,11 +157,11 @@ export default function UserChatPage() {
     if (noChatsLeft) return;
 
     socketRef.current.emit("chat:message", {
-      roomId:myroomId,
+      roomId: myroomId,
       type: "text",
       content: input,
     });
-    
+
     // ✅ Optimistically add your own message
     setMessages((prev) => [
       ...prev,
@@ -172,7 +186,7 @@ export default function UserChatPage() {
     if (noChatsLeft) return;
 
     socketRef.current.emit("chat:message", {
-      roomId:myroomId,
+      roomId: myroomId,
       type: "image",
       content: imageUrl,
     });
@@ -188,8 +202,6 @@ export default function UserChatPage() {
         imageUrl: imageUrl,
       },
     ]);
-
-    await decreaseChat();
   };
 
   const sendGiftMessage = (
@@ -203,7 +215,7 @@ export default function UserChatPage() {
       amount,
       currency,
       giftId,
-      roomId:myroomId
+      roomId: myroomId
     });
 
     setMessages((prev) => [
@@ -220,14 +232,12 @@ export default function UserChatPage() {
 
   };
 
-
-
   const nextChat = () => {
     // 1. Clear UI state immediately so the user knows the transition started
     setChatStatus("me_skipped")
     setMessages([]);
     setConnected(false);
-    setPartnerName(null);
+    setPartnerProfile(null);
     setSearchingText('Searching...')
 
     // 2. Get the delay from plan context (e.g., 90s for Free, 15s for Basic, 0s for Premium)
@@ -238,7 +248,7 @@ export default function UserChatPage() {
         // socketRef.current.emit("chat:next");
         if (myroomId) {
           socketRef.current.emit("chat:next", myroomId);
-        }        
+        }
         socketRef.current.emit("user:next");
       }
     }, delay);
@@ -249,7 +259,7 @@ export default function UserChatPage() {
     // setChatStatus("me_skipped")
     setMessages([]);
     setConnected(false);
-    setPartnerName(null);
+    setPartnerProfile(null);
     setSearchingText('Searching...')
 
     // 2. Get the delay from plan context (e.g., 90s for Free, 15s for Basic, 0s for Premium)
@@ -272,14 +282,14 @@ export default function UserChatPage() {
       <div className="flex flex-col flex-1 min-w-0">
         <ChatHeader
           connected={connected}
-          partnerName={partnerName || undefined}
+          partnerProfile={ partnerProfile}
           searchingText={searchingText || undefined}
         />
 
         <MessageList
           messages={messages}
           isTyping={isTyping}
-          partnerName={partnerName}
+          partnerProfile={partnerProfile}
           searchingText={searchingText}
           seconds={seconds}
           connected={connected}
@@ -296,7 +306,7 @@ export default function UserChatPage() {
           onChatStart={chatStart}
           onSendImage={sendImageMessage}
           onSendGift={sendGiftMessage}
-          onExit={()=>{
+          onExit={() => {
             socketRef.current.emit("chat:next", roomIdRef.current);
             setChatStatus("me_skipped")
             setConnected(false);

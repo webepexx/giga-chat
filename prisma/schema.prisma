@@ -16,8 +16,9 @@ datasource db {
 
 model User {
   id              String    @id @default(uuid())
-  name            String?
-  email           String    @unique
+  firstName       String
+  lastName        String
+  phone           String    @unique
   password        String
   lastLogin       DateTime?
   createdAt       DateTime  @default(now())
@@ -26,7 +27,7 @@ model User {
   // Profile and Chat Info
   username        String?   @unique
   gender          String?
-  chatCount       Int       @default(0)
+  chatCount       Int       @default(50)
   pfpUrl          String?
   interests       String[]  // Array of strings for interests
   
@@ -40,7 +41,7 @@ model User {
   
   // Billing & Subscription
   billingDate     DateTime?
-  planId          String?   // Foreign key
+  planId          String?
   plan            Plan?     @relation(fields: [planId], references: [id])
 }
 

@@ -55,6 +55,23 @@ export default function handler(
       
         socket.data.username = username;
       });      
+
+      socket.on("chat:send-user-profile", ({ roomId, userProfile }) => {
+        if (socket.data.role !== "mod") return;
+        if (!roomId) {
+          console.log("no mod room id send")
+          return
+        };
+      
+        console.log("MOD PROFILE:", userProfile);
+      
+        io.to(roomId).emit("chat:user-profile", {
+          roomId,
+          userProfile,
+        });
+      });
+      
+      
       
 
       // ==========================
@@ -62,6 +79,7 @@ export default function handler(
       // ==========================
       socket.on("user:next", () => handleUserNext(io, socket));
 
+      
       socket.on("chat:message", (payload) => {
         if (!payload?.type) return;
         console.log("MESSAGE SOCKET", payload)

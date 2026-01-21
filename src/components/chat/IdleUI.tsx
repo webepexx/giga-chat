@@ -9,33 +9,33 @@ import PremiumModal from './Modal'
 import { usePlan } from '@/contexts/PlanContext'
 
 const IdleUI = ({ chatStatus }: { chatStatus: string }) => {
-  const [open, setOpen] = useState(false)
+  const [checked, setChecked] = useState(true)
   const [premiumOpen, setPremiumOpen] = useState(false)
   const [report, setReport] = useState("Report")
   const { state } = usePlan();
 
   return (
     <>
-      <div className="flex flex-col items-center space-y-6 pt-20 animate-in fade-in zoom-in duration-300">
+      <div className="flex flex-col items-center space-y-6 animate-in fade-in zoom-in duration-300">
 
         {/* STATUS */}
         <div className="text-center space-y-2">
-          <p className="text-lg font-medium text-white flex items-center justify-center gap-2">
+          {/* <p className="text-lg font-medium text-white flex items-center justify-center gap-2">
             {chatStatus === "partner_skipped"
               ? "💔 Your chat partner has skipped this chat."
-              : "💔 You have skipped this chat."}
-          </p>
-          {
+              : (chatStatus === "me_skipped" ? "💔 You have skipped this chat." : "")}
+          </p> */}
+          {/* {
             chatStatus == "partner_skipped" &&
             <Button
               variant="destructive"
               size="sm"
               className="rounded-full bg-red-500/20 text-red-500 hover:bg-red-500/30 border-none px-4 h-8"
-              onClick={()=>setReport("Reported")}
+              onClick={() => setReport("Reported")}
             >
               <Flag className="w-3 h-3 mr-2" /> {report}
             </Button>
-          }
+          } */}
         </div>
 
         {/* SETTINGS */}
@@ -48,10 +48,16 @@ const IdleUI = ({ chatStatus }: { chatStatus: string }) => {
                 <Sparkles className="w-5 h-5 text-indigo-400" />
               </div>
               <span className="font-medium">
-                Interests <span className="text-green-400 text-sm ml-1">(ON)</span>
+                Interests <span className={`${checked ? "text-green-400" : "text-red-400"} text-sm ml-1`}>{checked ? "(ON)" : "(OFF)"}</span>
               </span>
             </div>
-            <Switch defaultChecked />
+            {/* <Switch defaultChecked={checked} onClick={()=>setChecked((prev)=>!prev)} className='bg-indigo-500'/> */}
+            <Switch
+              defaultChecked={checked}
+              onClick={()=>setChecked((prev) => !prev)}
+              className={`rounded-full transition-colors ${checked ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+            />
           </div>
 
           {/* GENDER FILTER */}

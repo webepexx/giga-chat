@@ -206,10 +206,10 @@ export default function ChatControls({
         {!connected && (
           <Button
             onClick={onChatStart}
-            disabled={searchingText !== null}
+            disabled={searchingText !== null || state?.chats_left == 0}
             className="bg-indigo-600 absolute -top-17 w-full text-md font-semibold hover:bg-indigo-500 px-4 py-6"
           >
-            {!searchingText ? "Find New Friends" : "Searching..."}
+            {!searchingText ? (state?.chats_left&&state?.chats_left > 0 ?"Find New Friends": "Come Back Tomorrow") : "Searching..."}
           </Button>
         )}
         <div className="relative flex-1">
@@ -236,8 +236,7 @@ export default function ChatControls({
               outline-none
               disabled:opacity-40
               overflow-y-auto overflow-x-hidden
-              leading-relaxed
-              max-h-32
+              leading-relaxed mt-1
             "
           />
 
@@ -294,7 +293,7 @@ export default function ChatControls({
             !connected ||
             (state?.chat_timer !== 0 && cooldown > 0)
           }
-          className="py-3 px-3 rounded-full bg-white/20 hover:bg-indigo-500 disabled:opacity-40 transition-colors"
+          className="py-3 px-3 mb-2 rounded-full bg-white/20 hover:bg-indigo-500 disabled:opacity-40 transition-colors"
         >
           {state?.chat_timer !== 0 && cooldown > 0 ? (
             <span className="text-sm font-mono">{cooldown}s</span>

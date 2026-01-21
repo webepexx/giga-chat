@@ -11,6 +11,7 @@ import {
 import { Button } from '../ui/button'
 import { Carousel } from '@mantine/carousel'
 import '@mantine/carousel/styles.css'
+import { usePlan } from '@/contexts/PlanContext'
 
 interface Plan {
   id: string
@@ -45,6 +46,7 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
   const [payingPlanId, setPayingPlanId] = useState<string | null>(null)
+  const { state } = usePlan();
 
   useEffect(() => {
     if (!open) return
@@ -98,12 +100,15 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
   //   }
   // }
 
-  const handleChoosePlan = async (planId: string) => {
+  const handleChoosePlan = async (planId: string, planName: string) => {
     try {
       setPayingPlanId(planId)
   
       console.log('Starting payment for plan:', planId)
-  
+
+      if(state?.planName == "Premium" && planName == "Basic"){
+
+      }
       const res = await fetch('/api/payu/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -222,7 +227,7 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
                     <div className="rounded-2xl bg-[#0e1326] px-6 pt-6 pb-4 flex flex-col h-full">
 
                       {/* NAME */}
-                      <div className="text-white text-lg font-bold">
+                      <div className="text-white text-left text-lg font-bold">
                         {plan.name}
                       </div>
 
@@ -247,11 +252,11 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
 
                       {/* CTA */}
                       <Button
-                        disabled={isPaying}
-                        onClick={() => handleChoosePlan(plan.id)}
+                        disabled={isPaying || state?.planName == plan.name}
+                        onClick={() => handleChoosePlan(plan.id, plan.name)}
                         className={`mt-4 w-full text-base font-bold bg-linear-to-r ${gradient}`}
                       >
-                        {isPaying ? 'Redirecting…' : 'Choose Plan'}
+                        {isPaying ? 'Redirecting…' : 'Choose Plan'}{state?.planName == plan.name}
                       </Button>
                     </div>
                   </div>

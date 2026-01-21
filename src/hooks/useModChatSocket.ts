@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "@/lib/socket/socket-mod";
+import { generateRandomUser } from "@/lib/utils";
 
 
 export type Message = {
@@ -14,12 +15,22 @@ export type Message = {
   currency?: "USD" | "EUR" | "INR";
 };
 
+export type RandomUserProfile = {
+  name: string;
+  username: string;
+  avatarUrl: string;
+  age: number;
+  city: string;
+};
+
 type ModChat = {
   roomId: string;
   userId: string;
   userPlan: "Free" | "Basic" | "Premium";
+  userProfile: RandomUserProfile;
   messages: Message[];
 };
+
 
 
 export function useModChatSocket(modName: string) {
@@ -40,19 +51,30 @@ export function useModChatSocket(modName: string) {
 
     // 🔗 CONNECTED TO USER
     socket.on("mod:new-chat", ({ roomId, userId, userPlan }) => {
+      const userProfile = generateRandomUser();
+    
       setChats((prev) => [
         ...prev,
         {
           roomId,
           userId,
           userPlan,
+          userProfile,
           messages: [],
         },
       ]);
-
+    
+      // 📤 Send profile to USER
+      console.log("RANDOM USER DETAIL", userProfile)
+      socket.emit("chat:send-user-profile", {
+        roomId,
+        userProfile,
+      });
+    
       // Auto-select first chat
       setActiveRoomId((prev) => prev ?? roomId);
     });
+    
 
 
     // 📩 RECEIVE MESSAGE FROM USER

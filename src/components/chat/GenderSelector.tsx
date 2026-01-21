@@ -9,7 +9,7 @@ import {
   VenusAndMars as VenusAndMarsIcon,
   LucideIcon
 } from "lucide-react"
-import React, { useState } from "react"
+import { useEffect, useState } from "react"
 
 type Gender = "male" | "female" | "both"
 
@@ -20,11 +20,18 @@ interface GenderOption {
 }
 
 const GenderSelector = () => {
-  const { state } = usePlan()
+  const { state,loading } = usePlan()
   const isFree = state?.planName === "Free"
 
+  useEffect(()=>{
+
+    if (state?.planName == "Free"){
+      setSelectedGender('both')
+    }
+  },[loading])
+
   const [selectedGender, setSelectedGender] = useState<Gender>(
-    isFree ? "both" : "female"
+    state?.planName === "Free" ? "both" : "male"
   )
 
   const options: GenderOption[] = [

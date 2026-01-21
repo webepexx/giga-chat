@@ -30,7 +30,7 @@ export function createPayUPayload(input: {
     `${key}|${input.txnid}|${amount}|${input.productinfo}|` +
     `${input.firstname}|${input.email}|` +
     `${udf1}|${udf2}|${udf3}|${udf4}|${udf5}` +
-    `|||||${salt}`;
+    `||||||${salt}`;
 
   const hash = crypto
     .createHash("sha512")

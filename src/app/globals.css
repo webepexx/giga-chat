@@ -162,3 +162,49 @@
 body{
   background-color: #141c33 !important;
 }
+
+
+/* Target the main container of the PillsInput */
+.mantine-PillsInput-input {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(63, 63, 63, 0.315) !important;
+  border-radius: 10px !important;
+  color: white !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  scroll-padding-top: 20px;
+}
+
+.mantine-PillGroup-group{
+  padding: 4px;
+}
+
+/* Style the focus state (Indigo ring effect) */
+.mantine-PillsInput-input:focus-within {
+  border-color: #6366f1 !important; /* Indigo 500 */
+  box-shadow: 0 0 0 1px #6366f1 !important;
+}
+
+/* Ensure the label matches your reference text-gray-300 */
+.mantine-PillsInput-label {
+  color: #d1d5db !important;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* Target the actual text input field inside the component */
+.mantine-PillsInput-field {
+  color: white !important;
+}
+
+.mantine-PillsInput-field::placeholder {
+  color: #9ca3af !important; /* text-gray-400 */
+}
+
+/* Adjust the Pill Group spacing if needed */
+.mantine-PillsInput-pillsList {
+  gap: 4px;
+}
+
+.mantine-UnstyledButton-root{
+  border-radius: 200px;
+}

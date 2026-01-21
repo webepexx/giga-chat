@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 // import { Switch } from "@/components/ui/switch";
 // import { ChevronDown, Flag, Sparkles, VenusAndMars } from "lucide-react";
 import IdleUI from "./IdleUI";
+import { RandomUserProfile } from "@/hooks/useModChatSocket";
 
 type Message = {
   id: number;
@@ -18,7 +19,7 @@ type Message = {
 interface MessageListProps {
   messages: Message[];
   isTyping: boolean;
-  partnerName: string | null;
+  partnerProfile: RandomUserProfile | null;
   searchingText: string | null;
   seconds: number;
   connected: boolean;
@@ -26,7 +27,7 @@ interface MessageListProps {
 }
 
 export default function MessageList({
-  messages, isTyping, partnerName, searchingText, seconds, connected, chatStatus
+  messages, isTyping, partnerProfile, searchingText, seconds, connected, chatStatus
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [openImage, setOpenImage] = useState<string | null | undefined>(null)
@@ -102,17 +103,17 @@ export default function MessageList({
         })}
 
         {/* SKIPPED STATE UI */}
-        {!connected &&
-          (chatStatus === "partner_skipped" || chatStatus === "me_skipped") && (
-            <IdleUI chatStatus={chatStatus} />
+        {/* {!connected &&
+          (chatStatus === "partner_skipped" || chatStatus === "idle") && (
+            <div className=""><IdleUI chatStatus={chatStatus} /></div>
 
           )}
 
         {isTyping && chatStatus === "active" && (
           <p className="text-xs text-white/40 animate-pulse">{partnerName || "Partner"} is typing...</p>
-        )}
+        )} */}
 
-        <div ref={bottomRef} />
+        <div/>
       </div>
 
       <div className="text-center text-white/50 pt-4 mb-14">
@@ -121,7 +122,15 @@ export default function MessageList({
           <span>{seconds>30&&"Too slow?.. Get Premium for faster matches"}</span>
         </>
         ) : (
-          !connected && chatStatus === "idle" && "Click below to find someone!"
+          !connected && chatStatus === "idle" && <><IdleUI chatStatus={chatStatus} /></>
+        )}
+                {!connected &&
+          (chatStatus === "partner_skipped" || chatStatus === "me_skipped") && (
+            <div className=""><IdleUI chatStatus={chatStatus} /></div>
+          )}
+
+        {isTyping && chatStatus === "active" && (
+          <p className="text-xs text-white/40 animate-pulse">{partnerProfile?.name || "Partner"} is typing...</p>
         )}
       </div>
       {/* IMAGE MODAL */}
