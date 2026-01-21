@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { firstName, lastName, phone, password, gender } = body;
+    const { firstName, lastName, phone, password, age } = body;
 
     /* -------------------- Validation -------------------- */
     if (!firstName || !lastName || !phone || !password) {
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
         firstName,
         lastName,
         phone,
-        gender,
+        age,
         password: hashedPassword,
         username,
         planId: freePlan.id,

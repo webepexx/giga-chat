@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   }
 
   // 🔐 Verify with PayU
-  const verified = await verifyPayUPayment(txnid, amount);
+  const verified = await verifyPayUPayment(txnid);
   if (!verified) {
     await prisma.payment.update({
       where: { txnid },

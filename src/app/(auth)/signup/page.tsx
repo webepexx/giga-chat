@@ -10,20 +10,49 @@ const Page = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
-  const [gender, setGender] = useState("");
   const [password, setPassword] = useState("");
+  const [DOB, setDOB] = useState("");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [ageConfirmed, setAgeConfirmed] = useState(false);
 
+  function calculateAge(dob: string): number {
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    return age;
+  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-  
+
+    // Age validation
+    if (!DOB) {
+      setError("Please enter your date of birth.");
+      setLoading(false);
+      return;
+    }
+
+    const age = calculateAge(DOB);
+
+    if (age < 18) {
+      setError("You must be at least 18 years old to create an account.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -32,37 +61,32 @@ const Page = () => {
           firstName,
           lastName,
           phone,
-          gender,
           password,
+          age, // ✅ send age as number
         }),
       });
-  
-      // const data = await res.json();
-      let data: any = null;
 
+      let data: any = null;
       try {
         data = await res.json();
-      } catch {
-        data = null; // response had no body
-      }
-  
+      } catch { }
+
       if (!res.ok) {
         setError(data?.error || "Signup failed");
         return;
       }
-  
-      // Auto login after successful signup
+
       const login = await signIn("credentials", {
         phone,
         password,
         redirect: false,
       });
-  
+
       if (login?.error) {
         setError("Account created, but login failed");
         return;
       }
-  
+
       router.push("/chat");
     } catch (err) {
       console.error(err);
@@ -71,33 +95,9 @@ const Page = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0b1020] via-[#0d1326] to-black px-4">
-      {!ageConfirmed && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0b1020] p-6 text-center shadow-2xl">
-            <h2 className="mb-3 text-xl font-semibold text-white">
-              Age Restriction
-            </h2>
-
-            <p className="mb-6 text-sm text-gray-300">
-              This platform is intended for users who are <span className="text-white font-medium">18 years or older</span>.
-              Please confirm your age to continue.
-            </p>
-
-            <div className="flex justify-center">
-              <button
-                onClick={() => setAgeConfirmed(true)}
-                className="w-1/2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 py-2 text-sm font-medium text-white hover:opacity-90"
-              >
-                I am 18+
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 shadow-2xl"
@@ -129,6 +129,24 @@ const Page = () => {
           required
           className="mb-4 w-full rounded-lg border border-white/10 bg-black/30 px-4 py-2 text-white focus:ring-1 focus:ring-indigo-500"
         />
+        <input
+          type="date"
+          value={DOB}
+          onChange={(e) => setDOB(e.target.value)}
+          required
+          max={new Date(
+            new Date().setFullYear(new Date().getFullYear() - 18)
+          ).toISOString().split("T")[0]}
+          className="
+            mb-4 w-full rounded-lg
+            border border-white/10
+            bg-black/30
+            px-4 py-2
+            text-white
+            focus:ring-1 focus:ring-indigo-500
+            [color-scheme:dark]
+          "
+        />
 
         {/* Phone (numbers only) */}
         <input
@@ -144,39 +162,6 @@ const Page = () => {
           inputMode="numeric"
           className="mb-4 w-full rounded-lg border border-white/10 bg-black/30 px-4 py-2 text-white focus:ring-1 focus:ring-indigo-500"
         />
-
-        {/* Gender */}
-        <div className="mb-4 w-full">
-          {/* <p className="mb-2 text-sm text-gray-300">Gender</p> */}
-
-          <div className="flex gap-6 w-full mx-auto">
-            <label className="flex cursor-pointer items-center gap-2 text-white">
-              <input
-                type="radio"
-                name="gender"
-                value="male"
-                checked={gender === "male"}
-                onChange={(e) => setGender(e.target.value)}
-                required
-                className="h-4 w-4 accent-indigo-500"
-              />
-              Male
-            </label>
-
-            <label className="flex cursor-pointer items-center gap-2 text-white">
-              <input
-                type="radio"
-                name="gender"
-                value="female"
-                checked={gender === "female"}
-                onChange={(e) => setGender(e.target.value)}
-                className="h-4 w-4 accent-indigo-500"
-              />
-              Female
-            </label>
-          </div>
-        </div>
-
 
         {/* Password */}
         <input

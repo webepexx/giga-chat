@@ -95,10 +95,6 @@ export async function verifyPayUPayment(txnid: string): Promise<boolean> {
 
   const data = await res.json();
 
-  /**
-   * Typical success status:
-   * data.transaction_details[txnid].status === "success"
-   */
   return (
     data?.transaction_details?.[txnid]?.status === "success"
   );

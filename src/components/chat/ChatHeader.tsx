@@ -146,7 +146,7 @@ export default function ChatHeader({ connected, partnerProfile, searchingText }:
               </div>
 
               {/* Username / Status */}
-              <span className="text-zinc-400 text-[10px] uppercase tracking-wider">
+              <span className="text-zinc-400 text-[10px] tracking-wider">
                 {connected ? partnerProfile?.username : data?.user?.userName}
               </span>
             </>

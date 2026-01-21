@@ -109,7 +109,7 @@ export default function EditProfileModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Edit Profile"
+      title="Profile Settings"
       centered
       overlayProps={{ opacity: 0.55, blur: 3 }}
       styles={{

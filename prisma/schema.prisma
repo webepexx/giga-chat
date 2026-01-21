@@ -29,6 +29,9 @@ model User {
   gender          String?
   chatCount       Int       @default(50)
   pfpUrl          String?
+  age             Int       @default(18)
+  city            String?
+  state           String?
   interests       String[]  // Array of strings for interests
   
   // Settings
@@ -119,8 +122,8 @@ model Image {
 }
 
 model Payment {
-  id String @id @default(uuid())
-  txnid     String
+  id        String  @id @default(uuid())
+  txnid     String  @unique
   userId    String
   amount    Float
   type      String  // "PLAN" | "GIFT"
