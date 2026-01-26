@@ -45,7 +45,7 @@ export async function GET(_request: NextRequest, context: Context) {
   const originalBuffer = Buffer.from(arrayBuffer);
 
   if(session.user.role == "MOD"){
-    return new Response(originalBuffer, {
+    return new Response(new Uint8Array(originalBuffer), {
       headers: {
         "Content-Type": "image/png",
         "Cache-Control": "no-store",
@@ -57,7 +57,7 @@ export async function GET(_request: NextRequest, context: Context) {
     ? originalBuffer
     : await sharp(originalBuffer).blur(25).toBuffer();
 
-  return new Response(outputBuffer, {
+  return new Response(new Uint8Array(outputBuffer), {
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": "no-store",
