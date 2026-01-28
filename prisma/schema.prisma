@@ -136,6 +136,7 @@ model Chat {
 model Image {
   id String @id @default(uuid())
   imageUrl String
+  isFree Boolean @default(true)
 }
 
 model Payment {

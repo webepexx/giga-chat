@@ -47,7 +47,7 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
         </div>
 
         <Button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => signOut({ callbackUrl: "/admin/login" })}
           className="hover:bg-red-500/10 hover:text-red-400"
         >
           Log Out

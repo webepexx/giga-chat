@@ -21,7 +21,7 @@ function AuthGuard({ children }: { children: ReactNode }) {
 
     // 1. Redirect if not logged in
     if (status === "unauthenticated" && !isPublicRoute) {
-      router.replace("/login");
+      router.replace("/signup");
       return;
     }
 

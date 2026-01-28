@@ -102,7 +102,7 @@ export default function MessageList({
                       w-64 max-w-[70%]
                       rounded-2xl overflow-hidden
                       border-2
-                      ${isLocked
+                      ${price && price>0
                         ? "border-amber-400 bg-amber-400/10"
                         : "border-white/20 cursor-pointer"}
                       `}
@@ -118,7 +118,7 @@ export default function MessageList({
                     />
 
                     {/* 🔒 LOCK OVERLAY */}
-                    {isLocked && (
+                    {isLocked && price>0 && (
                       <div
                         className="
                           absolute inset-0 z-10

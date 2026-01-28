@@ -18,13 +18,15 @@ export default function ChatInput({
   onTyping,
   onImageSend
 }: Props) {
+
   const [input, setInput] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [price, setPrice] = useState<number | "">("");
   const [imageId, setImageId] = useState<string | null>(null);
+  const [price, setPrice] = useState<number | "">("");
+  const [isFree, setIsFree] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -32,9 +34,10 @@ export default function ChatInput({
     setInput("");
   };
 
-  const uploadImageToDB = async (file: File): Promise<string> => {
+  const uploadImageToDB = async (file: File, isFree: boolean): Promise<string> => {
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("isFree", String(isFree));
 
     const response = await fetch("/api/mod/upload-image", {
       method: "POST",
@@ -50,7 +53,8 @@ export default function ChatInput({
     return data.imageId;
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -64,20 +68,41 @@ export default function ChatInput({
       return;
     }
 
+    setSelectedImage(file);
+    setIsFree(false);
+    setPrice("");
+    setImageId(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const IMAGE_PRICE_MARKER = " + imagePrice=";
+  const handleImageSend = async () => {
+    if (!selectedImage) return;
+
+    if (!isFree && price === "") {
+      notifications.show({
+        title: "Missing price",
+        message: "Set a price or mark image as free.",
+        color: "red",
+        icon: <IconX size={16} />,
+      });
+      return;
+    }
+
     try {
       setIsUploading(true);
 
-      const id = await uploadImageToDB(file);
+      const id = await uploadImageToDB(selectedImage, isFree);
 
-      setSelectedImage(file);
-      setImageId(id);
-      setPrice("");
+      const finalPrice = isFree ? 0 : price;
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      onImageSend(`${id} + imagePrice=${finalPrice}`);
+
+      cleanup();
     } catch (error) {
-      console.error("Upload error:", error);
       notifications.show({
         title: "Upload Failed",
         message: "Failed to upload image.",
@@ -88,20 +113,63 @@ export default function ChatInput({
       setIsUploading(false);
     }
   };
-  const IMAGE_PRICE_MARKER = " + imagePrice=";
 
-  const sendImageWithPrice = () => {
-    if (!imageId || price === "") return;
-  
-    // concatenate imageId + price into a single string
-    onImageSend(`${imageId}${IMAGE_PRICE_MARKER}${price}`);
-  
-    // cleanup
+  // const handleFreeUpload = async () => {
+  //   if (!selectedImage) return;
+
+  //   try {
+  //     setIsUploading(true);
+  //     const id = await uploadImageToDB(selectedImage, true);
+  //     setImageId(id);
+
+  //     onImageSend(`${id} + imagePrice=0`);
+
+  //     cleanup();
+  //   } catch (err) {
+  //     notifications.show({
+  //       title: "Upload Failed",
+  //       message: "Failed to upload free image.",
+  //       color: "red",
+  //       icon: <IconX size={16} />,
+  //     });
+  //   } finally {
+  //     setIsUploading(false);
+  //   }
+  // };
+
+
+
+  // const sendImageWithPrice = async () => {
+  //   if (!selectedImage || price === "") return;
+
+  //   try {
+  //     setIsUploading(true);
+  //     const id = await uploadImageToDB(selectedImage, false);
+  //     setImageId(id);
+
+  //     onImageSend(`${id} + imagePrice=${price}`);
+
+  //     cleanup();
+  //   } catch (err) {
+  //     notifications.show({
+  //       title: "Upload Failed",
+  //       message: "Failed to upload image.",
+  //       color: "red",
+  //       icon: <IconX size={16} />,
+  //     });
+  //   } finally {
+  //     setIsUploading(false);
+  //   }
+  // };
+
+  const cleanup = () => {
     setSelectedImage(null);
     setImageId(null);
     setPrice("");
+    setIsFree(false);
   };
-  
+
+
 
   return (
     <div className="border-t border-white/5 p-4 bg-[#0e1326]">
@@ -141,38 +209,55 @@ export default function ChatInput({
           />
 
           {selectedImage && (
-            <div className="absolute -top-full -left-20 mt-2 w-32">
+            <div className="absolute -top-32 -left-32 mt-2 w-40 rounded-lg bg-black/70 border border-white/20 px-3 py-3 text-sm text-white space-y-2">
+
+              {/* Free checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isFree}
+                  onChange={(e) => setIsFree(e.target.checked)}
+                  className="accent-indigo-500"
+                />
+                Free
+              </label>
+
+              {/* Price input (disabled if free) */}
               <input
                 type="number"
                 min="0"
                 step="0.01"
-                placeholder="Price"
+                placeholder={isFree ? "Free image" : "Price"}
                 value={price}
-                autoFocus
+                disabled={isFree}
                 onChange={(e) =>
-                  setPrice(
-                    e.target.value === "" ? "" : Number(e.target.value)
-                  )
+                  setPrice(e.target.value === "" ? "" : Number(e.target.value))
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    sendImageWithPrice();
+                    handleImageSend();
                   }
                 }}
-                onBlur={sendImageWithPrice}
-                className="w-full rounded-lg bg-black/60 border border-white/20 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-md bg-black/60 border border-white/20 px-3 py-2 text-sm text-white disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           )}
         </div>
 
         <button
-          onClick={handleSend}
+          onClick={() => {
+            if (selectedImage) {
+              handleImageSend();
+            } else {
+              handleSend();
+            }
+          }}
           disabled={!connected}
           className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40"
         >
           <ArrowBigRight />
         </button>
+
       </div>
     </div>
   );

@@ -26,16 +26,27 @@ interface PremiumModalProps {
 }
 
 const EXCLUDED_KEYS = ['id', 'name', 'createdAt', 'updatedAt', 'price']
+const TIME_KEYS = ['minMatchTime', 'chatTimer']
 
 const formatLabel = (key: string) =>
   key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())
 
-const extractFeatures = (plan: Plan): string[] =>
+  const extractFeatures = (plan: Plan): string[] =>
   Object.entries(plan)
     .filter(([k, v]) => !EXCLUDED_KEYS.includes(k) && v !== false)
-    .map(([k, v]) =>
-      typeof v === 'boolean' ? formatLabel(k) : `${formatLabel(k)}: ${v}`
-    )
+    .map(([k, v]) => {
+      const label = formatLabel(k)
+
+      if (typeof v === 'boolean') {
+        return label
+      }
+
+      if (TIME_KEYS.includes(k)) {
+        return `${label}: ${v} sec`
+      }
+
+      return `${label}: ${v}`
+    })
 
 const gradients: Record<string, string> = {
   Basic: 'from-indigo-500 via-purple-500 to-pink-500',

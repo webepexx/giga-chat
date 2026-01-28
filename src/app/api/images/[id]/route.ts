@@ -5,8 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { NextRequest } from "next/server";
 
 type Context = {
-  params: Promise<{ id: string }>
-}
+  params: Promise<{ id: string }>;
+};
 
 export async function GET(_request: NextRequest, context: Context) {
   const session = await getServerSession(authOptions);
@@ -25,16 +25,7 @@ export async function GET(_request: NextRequest, context: Context) {
     return new Response("Not found", { status: 404 });
   }
 
-  const payment = await prisma.payment.findFirst({
-    where: {
-      refId: id,
-      // userId,
-      type: "IMAGE",
-      status: "SUCCESS",
-    },
-  });
-
-  // ✅ Fetch remote image as buffer
+  // Fetch remote image as buffer
   const imageResponse = await fetch(image.imageUrl);
 
   if (!imageResponse.ok) {
@@ -44,7 +35,8 @@ export async function GET(_request: NextRequest, context: Context) {
   const arrayBuffer = await imageResponse.arrayBuffer();
   const originalBuffer = Buffer.from(arrayBuffer);
 
-  if(session.user.role == "MOD"){
+  // ✅ Mods always see original
+  if (session.user.role === "MOD") {
     return new Response(new Uint8Array(originalBuffer), {
       headers: {
         "Content-Type": "image/png",
@@ -52,7 +44,26 @@ export async function GET(_request: NextRequest, context: Context) {
       },
     });
   }
-  // 🔐 Blur if not paid
+
+  // ✅ Free images skip payment check
+  if (image.isFree) {
+    return new Response(new Uint8Array(originalBuffer), {
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
+  // 🔍 Paid image → check payment
+  const payment = await prisma.payment.findFirst({
+    where: {
+      refId: id,
+      type: "IMAGE",
+      status: "SUCCESS",
+    },
+  });
+
   const outputBuffer = payment
     ? originalBuffer
     : await sharp(originalBuffer).blur(25).toBuffer();
