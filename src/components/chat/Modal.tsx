@@ -31,7 +31,7 @@ const TIME_KEYS = ['minMatchTime', 'chatTimer']
 const formatLabel = (key: string) =>
   key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())
 
-  const extractFeatures = (plan: Plan): string[] =>
+const extractFeatures = (plan: Plan): string[] =>
   Object.entries(plan)
     .filter(([k, v]) => !EXCLUDED_KEYS.includes(k) && v !== false)
     .map(([k, v]) => {
@@ -63,14 +63,14 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
     if (state?.planName === planName) {
       return { label: 'Current Plan', disabled: true }
     }
-  
+
     if (state?.planName === 'Premium' && planName === 'Basic') {
       return { label: 'Downgrade', disabled: false }
     }
-  
+
     return { label: 'Choose Plan', disabled: false }
   }
-  
+
 
   useEffect(() => {
     if (!open) return
@@ -87,62 +87,59 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
   }, [open])
 
 
+  const TXN_KEY = "payu_txnid";
+
   const handleChoosePlan = async (planId: string, planName: string) => {
     try {
-      setPayingPlanId(planId)
-  
-      console.log('Starting payment for plan:', planId)
+      setPayingPlanId(planId);
 
-      if(state?.planName == "Premium" && planName == "Basic"){
-
-      }
       const res = await fetch('/api/payu/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId }),
-      })
-  
-      console.log('PayU create response status:', res.status)
-  
-      const text = await res.text()
-      console.log('PayU raw response:', text)
-  
+      });
+
+      const text = await res.text();
+
       if (!res.ok) {
-        throw new Error(text || 'PayU create failed')
+        throw new Error(text || 'PayU create failed');
       }
-  
-      const { action, payload } = JSON.parse(text)
-  
-      console.log('PayU action:', action)
-      console.log('PayU payload:', payload)
-  
-      const form = document.createElement('form')
-      form.method = 'POST'
-      form.action = action
-  
+
+      const { txnid, action, payload } = JSON.parse(text);
+
+      // ✅ Persist txnid BEFORE redirect
+      localStorage.setItem(TXN_KEY, txnid);
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = action;
+
       Object.entries(payload).forEach(([key, value]) => {
-        if (value === undefined) {
-          console.log("VALUE missing", value)
-          return
-        };
-      
-        const input = document.createElement('input')
-        input.type = 'hidden'
-        input.name = key
-        input.value = value as string
-        form.appendChild(input)
-      })
-      
-  
-      document.body.appendChild(form)
-      form.submit()
+        if (value === undefined) return;
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value as string;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+
+      onClose();
     } catch (err) {
-      console.error('PAYU ERROR:', err)
-      setPayingPlanId(null)
-      alert('Unable to start payment. Please try again.')
+      console.error('PAYU ERROR:', err);
+      setPayingPlanId(null);
+
+      // clean up in case create failed
+      localStorage.removeItem(TXN_KEY);
+
+      alert('Unable to start payment. Please try again.');
     }
-  }
-  
+  };
+
+
 
   if (!open) return null
 

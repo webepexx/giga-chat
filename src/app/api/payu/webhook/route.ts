@@ -1,109 +1,118 @@
-// import { NextResponse } from "next/server";
-// import { prisma } from "@/lib/prisma";
-// import { verifyPayUPayment } from "@/lib/payu";
-
-import { prisma } from "@/lib/prisma"
-
-// export async function POST(req: Request) {
-//   const form = await req.formData();
-
-//   const txnid = form.get("txnid") as string;
-//   const amount = Number(form.get("amount"));
-
-//   if (!txnid || !amount) {
-//     return NextResponse.json({ ok: false }, { status: 400 });
-//   }
-
-//   const payment = await prisma.payment.findUnique({ where: { txnid } });
-//   if (!payment) return NextResponse.json({ ok: false });
-
-//   // ✅ Idempotency
-//   if (payment.status === "SUCCESS") {
-//     return NextResponse.json({ ok: true });
-//   }
-
-//   // 🔐 Verify with PayU
-//   const verified = await verifyPayUPayment(txnid);
-//   if (!verified) {
-//     await prisma.payment.update({
-//       where: { txnid },
-//       data: { status: "FAILED" },
-//     });
-//     return NextResponse.json({ ok: false });
-//   }
-
-//   // 🧠 APPLY PLAN
-//   const plan = await prisma.plan.findUnique({
-//     where: { id: payment.refId },
-//   });
-
-//   if (!plan) return NextResponse.json({ ok: false });
-
-//   const now = new Date();
-//   const billingEnd = new Date(
-//     now.getTime() + 30 * 24 * 60 * 60 * 1000
-//   );
-
-//   await prisma.user.update({
-//     where: { id: payment.userId },
-//     data: {
-//       planId: plan.id,
-//       billingDate: now,
-//     },
-//   });
-
-//   await prisma.payment.update({
-//     where: { txnid },
-//     data: { status: "SUCCESS" },
-//   });
-
-//   return NextResponse.json({ ok: true });
-// }
-
+import { NextResponse } from "next/server";
+import crypto from "crypto";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
-  const body = await req.json()
+  const formData = await req.formData();
+
+  const data: Record<string, string> = {};
+  formData.forEach((value, key) => {
+    data[key] = value.toString();
+  });
 
   const {
-    subscription_id,
     txnid,
     status,
-    amount
-  } = body
+    amount,
+    productinfo,
+    firstname,
+    email,
+    hash,
+    udf1 = "",
+    udf2 = "",
+    udf3 = "",
+    udf4 = "",
+    udf5 = "",
+    udf6 = "",
+    udf7 = "",
+    udf8 = "",
+    udf9 = "",
+    udf10 = "",
+  } = data;
 
-  const user = await prisma.user.findFirst({
-    where: { payuSubId: subscription_id }
-  })
-
-  if (!user) return Response.json({ ok: true })
-
-  if (status === 'success') {
-    const nextBilling = new Date()
-    nextBilling.setMonth(nextBilling.getMonth() + 1)
-
-    const finalPlanId = user.pendingPlanId ?? user.planId
-
-    await prisma.$transaction([
-      prisma.payment.create({
-        data: {
-          txnid,
-          userId: user.id,
-          amount,
-          type: 'RENEWAL',
-          refId: finalPlanId!,
-          status: 'SUCCESS'
-        }
-      }),
-      prisma.user.update({
-        where: { id: user.id },
-        data: {
-          planId: finalPlanId,
-          pendingPlanId: null,
-          billingDate: nextBilling
-        }
-      })
-    ])
+  if (!txnid || !hash) {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  return Response.json({ ok: true })
+  // 🔐 Verify hash
+  const key = process.env.PAYU_MERCHANT_KEY!;
+  const salt = process.env.PAYU_SALT!;
+
+  const hashString = [
+    salt,
+    status,
+    udf10,
+    udf9,
+    udf8,
+    udf7,
+    udf6,
+    udf5,
+    udf4,
+    udf3,
+    udf2,
+    udf1,
+    email,
+    firstname,
+    productinfo,
+    amount,
+    txnid,
+    key,
+  ].join("|");
+
+  const calculatedHash = crypto
+    .createHash("sha512")
+    .update(hashString)
+    .digest("hex");
+
+  if (calculatedHash !== hash) {
+    console.error("PayU webhook hash mismatch", txnid);
+    return NextResponse.json({ error: "Hash mismatch" }, { status: 400 });
+  }
+
+  const payment = await prisma.payment.findUnique({
+    where: { txnid },
+  });
+
+  // 🔁 Idempotency
+  if (!payment || payment.status !== "PENDING") {
+    return NextResponse.json({ status: "ignored" }, { status: 200 });
+  }
+
+  const plan = await prisma.plan.findUnique({
+    where: { id: payment.refId },
+  });
+
+  if (!plan) {
+    console.error("Plan missing for txn", txnid);
+    return NextResponse.json({ error: "Plan missing" }, { status: 500 });
+  }
+
+  if (status === "success") {
+    await prisma.$transaction([
+      prisma.payment.update({
+        where: { txnid },
+        data: {
+          status: "SUCCESS",
+          createdAt: new Date(),
+        },
+      }),
+      prisma.user.update({
+        where: { id: payment.userId },
+        data: {
+          planId: payment.refId,
+          billingDate: new Date(),
+          chatCount: plan.maxDailyChats,
+        },
+      }),
+    ]);
+  } else {
+    await prisma.payment.update({
+      where: { txnid },
+      data: {
+        status: "FAILED",
+      },
+    });
+  }
+
+  return NextResponse.json({ status: "ok" }, { status: 200 });
 }

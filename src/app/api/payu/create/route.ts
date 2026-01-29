@@ -24,7 +24,6 @@ export async function POST(req: Request) {
 
   const txnid = crypto.randomUUID();
 
-  // Save pending payment
   await prisma.payment.create({
     data: {
       txnid,
@@ -37,24 +36,22 @@ export async function POST(req: Request) {
   });
 
   const email =
-  session.user.email ||
-  `${session.user.phone}@yourapp.local`
+    session.user.email ||
+    `${session.user.phone}@yourapp.local`;
 
-  // ✅ Use helper to generate PayU payload
   const payuPayload = createPayUPayload({
     txnid,
     amount: plan.price,
-    productinfo: `PLAN:${plan.id}`,
+    productinfo: `PLAN ${plan.id}`,
     firstname: session.user.firstName || "User",
-    email: email,
+    email,
     phone: "9999999999",
     surl: `${process.env.BASE_URL}/api/payu/callback`,
     furl: `${process.env.BASE_URL}/api/payu/callback`,
   });
 
-  console.log("PAYLOAD", payuPayload)
-
   return NextResponse.json({
+    txnid, // ⭐ REQUIRED for Android
     action: `${process.env.PAYU_BASE_URL}/_payment`,
     payload: payuPayload,
   });
