@@ -6,7 +6,7 @@ export default function Home() {
   const TelegramLink = process.env.TELEGRAM_LINK || ""
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden font-sans">
+    <div className="relative min-h-dvh w-full overflow-hidden font-sans">
       {/* Background Image */}
       <Image
         src="/bg-image.png"
