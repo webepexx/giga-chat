@@ -54,7 +54,8 @@ export default function Home() {
             <div className="mt-5 flex flex-col gap-4 items-center">
               <a
                 href="/Batcheet.apk"
-                download
+                download="Batcheet.apk" // Explicitly name it here
+                target="_blank"
                 className="
                   rounded-full
                   bg-linear-to-r from-rose-500 via-amber-600 to-rose-500
